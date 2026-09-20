@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HelpDesk Portal</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f6f8;
+        }
+
+        h1 {
+            color: #1f2937;
+        }
+
+        h2 {
+            color: #374151;
+            margin-top: 30px;
+        }
+
+        form {
+            background-color: white;
+            padding: 20px;
+            width: 400px;
+            border-radius: 8px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            background-color: white;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e5e7eb;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <h1>HelpDesk Portal</h1>
+
+    <p>Manage support tickets</p>
+
+    <h2>Create New Ticket</h2>
+
+    <form>
+
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title" placeholder="Enter ticket title"><br><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description" placeholder="Describe the issue"></textarea><br><br>
+
+        <label for="priority">Priority:</label><br>
+        <select id="priority" name="priority">
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM" selected>MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+        </select><br><br>
+
+        <button type="submit">Create Ticket</button>
+
+    </form>
+    
+    <h2>Existing Tickets</h2>
+
+    <table border="1">
+        <thead>
+             <tr>
+               <th>ID</th>
+               <th>Title</th>
+               <th>Description</th>
+               <th>Priority</th>
+               <th>Status</th>
+               <th>Created At</th>
+               <th>Actions</th>
+             </tr>
+        </thead>
+
+        <tbody id="ticketTableBody">
+        </tbody>
+    </table>
+
+<script>
+
+    const ticketForm = document.querySelector("form");
+
+    ticketForm.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const title = document.getElementById("title").value;
+        const description = document.getElementById("description").value;
+        const priority = document.getElementById("priority").value;
+
+        const response = await fetch("/tickets", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                priority: priority
+            })
+        });
+
+        const result = await response.json();
+
+        console.log(result);
+
+    });
+
+</script>
+
+<script>
+
+    async function loadTickets() {
+
+        const response = await fetch("/tickets");
+
+        const tickets = await response.json();
+
+        const tableBody = document.getElementById("ticketTableBody");
+
+        tableBody.innerHTML = "";
+
+        tickets.forEach(function(ticket) {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+              <td>${ticket.id}</td>
+              <td>${ticket.title}</td>
+              <td>${ticket.description}</td>
+              <td>${ticket.priority}</td>
+
+            <td>
+                <select onchange="updateStatus(${ticket.id}, this.value)">
+                  <option value="OPEN" ${ticket.status === "OPEN" ? "selected" : ""}>OPEN</option>
+                  <option value="IN_PROGRESS" ${ticket.status === "IN_PROGRESS" ? "selected" : ""}>IN_PROGRESS</option>
+                  <option value="CLOSED" ${ticket.status === "CLOSED" ? "selected" : ""}>CLOSED</option>
+                </select>
+            </td>
+
+            <td>${ticket.created_at}</td>
+
+            <td>
+                <button onclick="deleteTicket(${ticket.id})">Delete</button>
+            </td>
+        `;
+
+            tableBody.appendChild(row);
+
+        });
+    }
+
+    loadTickets();
+
+</script>
+
+<script>
+
+    async function deleteTicket(ticketId) {
+
+        const response = await fetch(`/tickets/${ticketId}`, {
+            method: "DELETE"
+        });
+
+        const result = await response.json();
+
+        console.log(result);
+
+        loadTickets();
+    }
+
+    async function updateStatus(ticketId, status) {
+
+    const response = await fetch(`/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            status: status
+        })
+    });
+
+    const result = await response.json();
+
+    console.log(result);
+
+    loadTickets();
+}
+
+</script>
+
+</body>
+
+</html>
