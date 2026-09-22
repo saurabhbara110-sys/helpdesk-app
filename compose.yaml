@@ -1,0 +1,29 @@
+services:
+  helpdesk-app:
+    image: helpdesk-app:1.0
+    container_name: helpdesk-app-container
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: postgres
+      DB_NAME: helpdesk_db
+      DB_USER: helpdesk_user
+      DB_PASSWORD: REDACTED_PASSWORD
+
+  postgres:
+    image: postgres
+    container_name: helpdesk-db
+    restart: always
+
+    environment:
+      POSTGRES_DB: helpdesk_db
+      POSTGRES_USER: helpdesk_user
+      POSTGRES_PASSWORD: REDACTED_PASSWORD
+
+    volumes:
+      - db_data:/var/lib/postgresql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:
