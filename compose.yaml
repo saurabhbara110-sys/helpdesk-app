@@ -1,6 +1,6 @@
 services:
   helpdesk-app:
-    image: helpdesk-app:1.0
+    image: helpdesk-app:${IMAGE_TAG}
     container_name: helpdesk-app-container
     restart: always
     ports:
