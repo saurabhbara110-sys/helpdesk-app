@@ -10,6 +10,17 @@ pipeline {
                 checkout scm
             }
         }
+        stage('SonarQube Scan') {
+           steps {
+             script {
+                def scannerHome = tool 'sonar-scanner'
+                withSonarQubeEnv('sonarqube') {
+                  sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=helpdesk-app -Dsonar.sources=."
+
+                    }
+                 }
+              }
+           }
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
