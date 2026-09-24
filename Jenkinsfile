@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = 'helpdesk-app'
+        DOCKERHUB_REPO = 'saurabhbara110/helpdesk-app'
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
     stages {
@@ -31,9 +31,26 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                sh 'docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} .'
             }
         }
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword (
+                credentialsId: 'dockerhub-credentials',
+                usernameVariable: 'DOCKERHUB_USER',
+                passwordVariable: 'DOCKERHUB_TOKEN'
+               )] ) {
+                      sh '''
+                         echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                         docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}
+                         docker logout
+                      '''
+                    }
+              }
+         }
+
+
         stage('Deploy Multi-container') {
             steps {
                 withCredentials ( [usernamePassword(
