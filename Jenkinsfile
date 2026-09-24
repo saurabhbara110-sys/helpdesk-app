@@ -21,6 +21,14 @@ pipeline {
                  }
               }
            }
+        stage('Quality Gate') {
+             steps {
+                 timeout(time: 5, unit: 'Minutes') {
+                waitForQualityGate abortPipeline: true
+                 }
+              }
+           }
+
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
