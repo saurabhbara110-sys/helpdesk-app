@@ -16,12 +16,18 @@ spec:
         app: helpdesk-app
 
     spec:
+      automountServiceAccountToken: false
+
       containers:
         - name: helpdesk-app-container
           image: saurabhbara110/helpdesk-app:15
           ports:
             - containerPort: 5000
 
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
           env:
             - name: DB_HOST
               value: postgres
