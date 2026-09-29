@@ -51,16 +51,32 @@ pipeline {
          }
 
 
-        stage('Deploy Multi-container') {
-            steps {
-                withCredentials ( [usernamePassword(
-                credentialsId: 'helpdesk-db-credentials',
-                usernameVariable: 'DB_USER',
-                passwordVariable: 'DB_PASSWORD'
-             )]) {
-                sh 'docker compose up -d'
+#        stage('Deploy Multi-container') {
+#            steps {
+#                withCredentials ( [usernamePassword(
+#                credentialsId: 'helpdesk-db-credentials',
+#                usernameVariable: 'DB_USER',
+#                passwordVariable: 'DB_PASSWORD'
+#             )]) {
+#                sh 'docker compose up -d'
+#            }
+#         }
+#      }
+
+         stage('Deployment to Kubernetes'){
+             steps{
+                 sh '''
+                    kubectl apply -f k8s/helpdesk-deployment.yaml 
+                    kubectl apply -f k8s/helpdesk-service.yaml
+                    kubectl apply -f k8s/helpdesk-ingress.yaml
+
+                    kubectl set image deployment/helpdesk-app helpdesk-app-container=${DOCKERHUB_REPO}:${IMAGE_TAG} \
+                      -n helpdesk
+
+                    kubectl rollout status deployment/helpdesk-app -n helpdesk
+                    '''
+
             }
-         }
-      }
-   }
+        }
+    }
 }
