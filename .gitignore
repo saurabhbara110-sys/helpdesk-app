@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .env
 temp-repl
+k8s/postgres-secret.yaml

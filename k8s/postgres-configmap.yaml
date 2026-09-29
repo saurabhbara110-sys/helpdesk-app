@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-configmap
+  namespace: helpdesk
+
+data:
+  POSTGRES_DB: helpdesk_db
+  POSTGRES_USER: helpdesk_user
