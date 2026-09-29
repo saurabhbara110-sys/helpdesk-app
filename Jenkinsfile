@@ -62,8 +62,19 @@ pipeline {
                     kubectl set image deployment/helpdesk-app helpdesk-app-container=${DOCKERHUB_REPO}:${IMAGE_TAG} \
                       -n helpdesk
 
-                    kubectl rollout status deployment/helpdesk-app -n helpdesk
-                    '''
+                    if ! kubectl rollout status deployment/helpdesk-app -n helpdesk; then
+                         echo "Deployment rollout failed, Rolling back..."
+
+                         kubectl rollout undo deployment/helpdesk-app -n helpdesk
+
+                         echo "Rollback completed, Verifying rollback..."
+
+                         kubectl rollout status deployment/helpdesk-app -n helpdesk
+
+                         exit 1
+
+                    fi
+                '''
 
             }
         }
