@@ -28,6 +28,9 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
+              ephemeral-storage: "256Mi"
+            limits:
+              memory: "256Mi"
           env:
             - name: DB_HOST
               value: postgres
