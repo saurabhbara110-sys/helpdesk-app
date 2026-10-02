@@ -52,28 +52,12 @@ pipeline {
 
 
 
-         stage('Deployment to Kubernetes'){
+         stage('Helm chart deployment'){
              steps{
                  sh '''
-                    kubectl apply -f k8s/helpdesk-deployment.yaml 
-                    kubectl apply -f k8s/helpdesk-service.yaml
-                    kubectl apply -f k8s/helpdesk-ingress.yaml
+                       helm upgrade helpdesk ./helm/helpdesk -n helpdesk \
+                       --set image.tag=${IMAGE_TAG}
 
-                    kubectl set image deployment/helpdesk-app helpdesk-app-container=${DOCKERHUB_REPO}:${IMAGE_TAG} \
-                      -n helpdesk
-
-                    if ! kubectl rollout status deployment/helpdesk-app -n helpdesk; then
-                         echo "Deployment rollout failed, Rolling back..."
-
-                         kubectl rollout undo deployment/helpdesk-app -n helpdesk
-
-                         echo "Rollback completed, Verifying rollback..."
-
-                         kubectl rollout status deployment/helpdesk-app -n helpdesk
-
-                         exit 1
-
-                    fi
                 '''
 
             }
