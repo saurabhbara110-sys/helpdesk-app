@@ -17,7 +17,7 @@ SUPPORT_ACCESS_REQUIRED = "Support access required"
 def home():
     return send_from_directory("frontend", "index.html")
 
-@app.route("/raise-ticket")
+@app.route("/raise-ticket", methods=["GET"])
 def raise_ticket_page():
     if "username" not in session:
         return redirect("/")
