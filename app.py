@@ -1,5 +1,4 @@
 import os
-import re
 from werkzeug.security import check_password_hash
 from flask import Flask, request, jsonify, send_from_directory, session, render_template, redirect, make_response
 from db import pool, get_user
@@ -10,7 +9,11 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-@app.route("/")
+JSON_BODY_REQUIRED = "JSON body is required"
+LOGIN_REQUIRED = "Please login first"
+SUPPORT_ACCESS_REQUIRED = "Support access required"
+
+@app.route("/", methods=["GET"])
 def home():
     return send_from_directory("frontend", "index.html")
 
@@ -45,7 +48,7 @@ def login():
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"error": "JSON body is required"}), 400
+        return jsonify({"error": JSON_BODY_REQUIRED}), 400
 
     username = data.get("username")
     password = data.get("password")
@@ -78,12 +81,12 @@ def login():
         "role": user[4]
     })
 
-@app.route("/logout")
+@app.route("/logout", methods=["GET"])
 def logout():
     session.clear()
     return redirect("/")
 
-@app.route("/dashboard")
+@app.route("/dashboard", methods=["GET"])
 def dashboard():
     if "username" not in session:
         return redirect("/")
@@ -104,15 +107,15 @@ def dashboard():
 def create_ticket():
 
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"error": "JSON body is required"}), 400
+        return jsonify({"error": JSON_BODY_REQUIRED}), 400
 
     title = data.get("title")
 
@@ -158,7 +161,7 @@ def create_ticket():
 def raise_ticket():
 
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "CUSTOMER":
         return jsonify({"error": "Customer access required"}), 403
@@ -166,7 +169,7 @@ def raise_ticket():
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"error": "JSON body is required"}), 400
+        return jsonify({"error": JSON_BODY_REQUIRED}), 400
 
     customer_name = session["username"]
     customer_email = data.get("customer_email")
@@ -179,8 +182,14 @@ def raise_ticket():
             "error": "Customer name, customer email and title are required"
         }), 400
 
-    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", customer_email):
-        return jsonify({"error": "Invalid customer email"}), 400
+    if (
+          "@" not in customer_email
+          or " " in customer_email
+          or "." not in customer_email.split("@")[-1]
+    ):
+        
+
+          return jsonify({"error": "Invalid customer email"}), 400
 
     allowed_priorities = ["LOW", "MEDIUM", "HIGH"]
 
@@ -243,18 +252,17 @@ def raise_ticket():
 @app.route("/tickets", methods=["GET"])
 def get_tickets():
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     with pool.connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, title, description, priority, status, assigned_to, created_at
-                FROM tickets
-                ORDER BY id;
+                SELECT id, title, description, priority, status, assigned_to, resolution_comment, created_at
+                FROM tickets ORDER BY id;
                 """
             )
 
@@ -270,7 +278,8 @@ def get_tickets():
             "priority": row[3],
             "status": row[4],
             "assigned_to": row[5],
-            "created_at": row[6].isoformat()
+            "resolution_comment": row[6],
+            "created_at": row[7].isoformat()
         })
 
     return jsonify(tickets)
@@ -278,10 +287,10 @@ def get_tickets():
 @app.route("/tickets/<int:ticket_id>/take", methods=["PUT"])
 def take_ticket(ticket_id):
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     username = session["username"]
 
@@ -320,17 +329,17 @@ def take_ticket(ticket_id):
 @app.route("/tickets/<int:ticket_id>/resolve", methods=["PUT"])
 def resolve_ticket(ticket_id):
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     username = session["username"]
 
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"error": "JSON body is required"}), 400
+        return jsonify({"error": JSON_BODY_REQUIRED}), 400
 
     resolution_comment = data.get("resolution_comment")
 
@@ -376,10 +385,10 @@ def resolve_ticket(ticket_id):
 def get_ticket(ticket_id):
 
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     with pool.connection() as conn:
         with conn.cursor() as cursor:
@@ -410,15 +419,15 @@ def get_ticket(ticket_id):
 def update_ticket(ticket_id):
 
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"error": "JSON body is required"}), 400
+        return jsonify({"error": JSON_BODY_REQUIRED}), 400
 
     status = data.get("status")
 
@@ -465,10 +474,10 @@ def update_ticket(ticket_id):
 def delete_ticket(ticket_id):
 
     if "username" not in session:
-        return jsonify({"error": "Please login first"}), 401
+        return jsonify({"error": LOGIN_REQUIRED}), 401
 
     if session.get("role") != "SUPPORT":
-        return jsonify({"error": "Support access required"}), 403
+        return jsonify({"error": SUPPORT_ACCESS_REQUIRED}), 403
 
     with pool.connection() as conn:
         with conn.cursor() as cursor:

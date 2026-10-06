@@ -78,7 +78,7 @@
 
 </div>
 
-<script>
+<script type="module">
 
     async function loadTickets() {
 
@@ -94,13 +94,14 @@
             const ticketDiv = document.createElement("div");
 
             ticketDiv.className = "ticket";
+	    ticketDiv.id = `ticket-${ticket.id}`;
 
             let actionButton = "";
 
             if (ticket.assigned_to === null) {
 
                 actionButton = `
-                    <button onclick="takeTicket(${ticket.id})">
+                    <button onclick="takeTicket(${ticket.id}); this.blur()">
                         Take Ticket
                     </button>
                 `;
@@ -181,7 +182,39 @@
             document.getElementById("ticketResult").innerHTML =
                 `<p>Ticket #${ticketId} assigned to ${data.assigned_to}</p>`;
 
-            loadTickets();
+	    const ticketDiv = document.getElementById(`ticket-${ticketId}`);
+
+	    ticketDiv.querySelector("p:nth-of-type(3)").innerHTML =
+	        `<strong>Status:</strong> IN_PROGRESS`;
+
+	    ticketDiv.querySelector("p:nth-of-type(4)").innerHTML =
+	        `<strong>Assigned To:</strong> ${data.assigned_to}`;
+
+	    ticketDiv.insertAdjacentHTML(
+	        "beforeend",
+
+		`
+                <div class="resolve-section">
+		   <textarea
+		       id="resolution-${ticketId}"
+		       placeholder="Enter resolution comment">
+		   </textarea>
+
+		   <button onclick="resolveTicket(${ticketId})">
+		       Resolve Ticket
+		   </button>
+
+		 </div>
+
+		 `
+	    );
+
+	    const resolutionField =
+	        document.getElementById(`resolution-${ticketId}`);
+
+	    resolutionField.focus();
+	    resolutionField.setSelectionRange(0, 0);
+
 
         } else {
 
@@ -226,7 +259,36 @@
             document.getElementById("ticketResult").innerHTML =
                 `<p>Ticket #${ticketId} has been closed successfully.</p>`;
 
-            loadTickets();
+            const ticketDiv = document.getElementById(`ticket-${ticketId}`);
+
+            ticketDiv.innerHTML = `
+                  <h3>#${ticketId} - ${data.title}</h3>
+
+                  <p>
+                      <strong>Description:</strong>
+                      ${data.description}
+                  </p>
+
+                  <p>
+                      <strong>Priority:</strong>
+                      ${data.priority}
+                  </p>
+
+                  <p>
+                      <strong>Status:</strong>
+                      ${data.status}
+                  </p>
+
+                  <p>
+                      <strong>Assigned To:</strong>
+                      ${data.assigned_to}
+                  </p>
+
+                  <p>
+                      <strong>Resolution:</strong>
+                      ${data.resolution_comment}
+                  </p>
+              `;
 
         } else {
 
@@ -235,8 +297,10 @@
         }
     }
 
+    window.takeTicket = takeTicket;
+    window.resolveTicket = resolveTicket;
 
-    loadTickets();
+    await loadTickets();
 
 </script>
 
