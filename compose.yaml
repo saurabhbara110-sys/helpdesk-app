@@ -2,7 +2,7 @@ services:
   helpdesk-app:
     image: saurabhbara110/helpdesk-app:${IMAGE_TAG}
     container_name: helpdesk-app-container
-    restart: always
+    restart: "no"
     ports:
       - "5000:5000"
     environment:
@@ -14,7 +14,7 @@ services:
   postgres:
     image: postgres
     container_name: helpdesk-db
-    restart: always
+    restart: "no"
 
     environment:
       POSTGRES_DB: helpdesk_db

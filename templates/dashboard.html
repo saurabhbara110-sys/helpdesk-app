@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HelpDesk Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .dashboard {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .ticket {
+            background-color: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket h3 {
+            margin-top: 0;
+        }
+
+        .ticket p {
+            margin: 8px 0;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            margin-top: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .resolve-section {
+            margin-top: 15px;
+        }
+
+        #ticketResult {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <h1>HelpDesk Dashboard</h1>
+    <a href="/logout">
+	    <button type="button">Logout</button>
+    </a>
+
+    <p>Welcome, {{ session["username"] }}</p>
+    <p>Department: {{ session["department"] }}</p>
+
+    <h2>Tickets</h2>
+
+    <div id="tickets"></div>
+
+    <div id="ticketResult"></div>
+
+</div>
+
+<script>
+
+    async function loadTickets() {
+
+        const response = await fetch("/tickets");
+        const tickets = await response.json();
+
+        const ticketsContainer = document.getElementById("tickets");
+
+        ticketsContainer.innerHTML = "";
+
+        tickets.forEach(ticket => {
+
+            const ticketDiv = document.createElement("div");
+
+            ticketDiv.className = "ticket";
+
+            let actionButton = "";
+
+            if (ticket.assigned_to === null) {
+
+                actionButton = `
+                    <button onclick="takeTicket(${ticket.id})">
+                        Take Ticket
+                    </button>
+                `;
+
+            } else if (
+                ticket.assigned_to === "{{ session['username'] }}" &&
+                ticket.status === "IN_PROGRESS"
+            ) {
+
+                actionButton = `
+                    <div class="resolve-section">
+
+                        <textarea
+                            id="resolution-${ticket.id}"
+                            placeholder="Enter resolution comment">
+                        </textarea>
+
+                        <button onclick="resolveTicket(${ticket.id})">
+                            Resolve Ticket
+                        </button>
+
+                    </div>
+                `;
+            }
+
+            ticketDiv.innerHTML = `
+                <h3>#${ticket.id} - ${ticket.title}</h3>
+
+                <p>
+                    <strong>Description:</strong>
+                    ${ticket.description}
+                </p>
+
+                <p>
+                    <strong>Priority:</strong>
+                    ${ticket.priority}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${ticket.status}
+                </p>
+
+                <p>
+                    <strong>Assigned To:</strong>
+                    ${ticket.assigned_to || "Unassigned"}
+                </p>
+
+                ${
+                    ticket.resolution_comment
+                    ? `
+                        <p>
+                            <strong>Resolution:</strong>
+                            ${ticket.resolution_comment}
+                        </p>
+                    `
+                    : ""
+                }
+
+                ${actionButton}
+            `;
+
+            ticketsContainer.appendChild(ticketDiv);
+        });
+    }
+
+
+    async function takeTicket(ticketId) {
+
+        const response = await fetch(`/tickets/${ticketId}/take`, {
+            method: "PUT"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            document.getElementById("ticketResult").innerHTML =
+                `<p>Ticket #${ticketId} assigned to ${data.assigned_to}</p>`;
+
+            loadTickets();
+
+        } else {
+
+            document.getElementById("ticketResult").innerHTML =
+                `<p>${data.error}</p>`;
+        }
+    }
+
+
+    async function resolveTicket(ticketId) {
+
+        const resolutionField =
+            document.getElementById(`resolution-${ticketId}`);
+
+        const resolutionComment = resolutionField.value.trim();
+
+        if (!resolutionComment) {
+
+            document.getElementById("ticketResult").innerHTML =
+                `<p>Please enter a resolution comment.</p>`;
+
+            return;
+        }
+
+        const response = await fetch(`/tickets/${ticketId}/resolve`, {
+
+            method: "PUT",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                resolution_comment: resolutionComment
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            document.getElementById("ticketResult").innerHTML =
+                `<p>Ticket #${ticketId} has been closed successfully.</p>`;
+
+            loadTickets();
+
+        } else {
+
+            document.getElementById("ticketResult").innerHTML =
+                `<p>${data.error}</p>`;
+        }
+    }
+
+
+    loadTickets();
+
+</script>
+
+<script>
+    window.addEventListener("pageshow", function(event) {
+        if (event.persisted) {
+            window.location.href = "/";
+        }
+    });
+</script>
+
+</body>
+</html>
