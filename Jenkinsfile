@@ -14,7 +14,8 @@ pipeline {
         stage('Test and Code Coverage') {
            steps {
              sh '''
-                 python3 -m venv --help
+                 python3 -m venv .venv
+                 .venv/bin/pip install -r requirements.txt
 
                 '''
              }
@@ -24,7 +25,7 @@ pipeline {
              script {
                 def scannerHome = tool 'sonar-scanner'
                 withSonarQubeEnv('sonarqube-helpdesk') {
-                  sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=helpdesk-app -Dsonar.sources=."
+                  sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=helpdesk-app -Dsonar.sources=. -Dsonar.exclusions=tests/**"
 
                     }
                  }
