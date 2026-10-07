@@ -4,3 +4,4 @@ psycopg-binary==3.3.5
 python-dotenv==1.2.4
 pytest
 pytest-cov
+psycopg-pool==3.3.0
