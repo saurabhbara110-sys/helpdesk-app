@@ -14,8 +14,10 @@ pipeline {
         stage('Test and Code Coverage') {
            steps {
              sh '''
-                 python3 -m pytest --version
-                 python3 -m pip show pytest-cov
+                 python3 -m pip install -r requirements.txt
+                 python3 -m pytest --cov=app \
+                                   --cov-report=term-missing \
+                                   --cove-report=xml
 
                 '''
              }
