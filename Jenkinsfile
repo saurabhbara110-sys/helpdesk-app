@@ -10,6 +10,16 @@ pipeline {
                 checkout scm
             }
         }
+
+        stage('Test and Code Coverage') {
+           steps {
+             sh '''
+                  pytest --cov=app \
+                         --cov-report=term-missing \
+                         --cov-report=xml
+                '''
+             }
+         }
         stage('SonarQube Scan') {
            steps {
              script {
