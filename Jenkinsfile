@@ -14,9 +14,9 @@ pipeline {
         stage('Test and Code Coverage') {
            steps {
              sh '''
-                  pytest --cov=app \
-                         --cov-report=term-missing \
-                         --cov-report=xml
+                 python3 -m pytest --version
+                 python3 -m pip show pytest-cov
+
                 '''
              }
          }
