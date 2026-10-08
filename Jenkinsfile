@@ -14,6 +14,7 @@ pipeline {
         stage('Test and Code Coverage') {
            steps {
              sh '''
+                 export FLASK_SECRET_KEY="test-secret-key"
                  python3 -m venv .venv
                  .venv/bin/pip install -r requirements.txt
                  .venv/bin/pytest --cov=app \
