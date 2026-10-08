@@ -13,16 +13,23 @@ pipeline {
 
         stage('Test and Code Coverage') {
            steps {
-             sh '''
-                 export FLASK_SECRET_KEY="test-secret-key"
-                 python3 -m venv .venv
-                 .venv/bin/pip install -r requirements.txt
-                 .venv/bin/pytest --cov=app \
-                                  --cov-report=term-missing \
-                                  --cov-report=xml
 
-                '''
-             }
+                 withCredentials([string(
+                       credentialsId: 'postgres_local_db_password',
+                       variable: 'DB_PASSWORD'
+                   )]) {
+                      sh '''
+                           export FLASK_SECRET_KEY="test-secret-key"
+                           python3 -m venv .venv
+                           .venv/bin/pip install -r requirements.txt
+                           .venv/bin/pytest --cov=app \
+                                            --cov-report=term-missing \
+                                            --cov-report=xml
+
+                         '''
+                 }
+
+              }
          }
         stage('SonarQube Scan') {
            steps {
