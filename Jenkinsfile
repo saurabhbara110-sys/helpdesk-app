@@ -80,12 +80,17 @@ pipeline {
 
          stage('Helm chart deployment'){
              steps{
+                 withCredentials([ string(
+                       credentialsId: 'flask_secret_key',
+                       variable: 'FLASK_SECRET_KEY'
+                 )]) {
                  sh '''
                        helm upgrade helpdesk ./helm/helpdesk -n helpdesk \
-                       --set image.tag=${IMAGE_TAG}
+                       --set image.tag=${IMAGE_TAG} \
+                       --set flaskSecretKey="${FLASK_SECRET_KEY}"
 
                 '''
-
+               }
             }
         }
     }

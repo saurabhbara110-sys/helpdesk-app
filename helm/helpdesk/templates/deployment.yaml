@@ -61,6 +61,12 @@ spec:
                 secretKeyRef:
                   name: postgres-secret
                   key: POSTGRES_PASSWORD
+
+            - name: FLASK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: helpdesk-flask-secret
+                  key: FLASK_SECRET_KEY
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

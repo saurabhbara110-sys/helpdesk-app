@@ -160,3 +160,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+flaskSecretKey: ""
