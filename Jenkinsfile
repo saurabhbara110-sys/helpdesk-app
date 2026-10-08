@@ -18,7 +18,7 @@ pipeline {
                        credentialsId: 'postgres_local_db_password',
                        variable: 'DB_PASSWORD'
                    )]) {
-                      sh '''
+                      sh """
                            export FLASK_SECRET_KEY="test-secret-key"
                            python3 -m venv .venv
                            .venv/bin/pip install -r requirements.txt
@@ -26,7 +26,7 @@ pipeline {
                                             --cov-report=term-missing \
                                             --cov-report=xml
 
-                         '''
+                         """
                  }
 
               }
