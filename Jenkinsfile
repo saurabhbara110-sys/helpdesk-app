@@ -36,8 +36,12 @@ pipeline {
              script {
                 def scannerHome = tool 'sonar-scanner'
                 withSonarQubeEnv('sonarqube-helpdesk') {
-                  sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=helpdesk-app -Dsonar.sources=. -Dsonar.exclusions=tests/**"
-
+                  sh ''' ${scannerHome}/bin/sonar-scanner \
+                           -Dsonar.projectKey=helpdesk-app \
+                           -Dsonar.sources=. \
+                           -Dsonar.exclusions=tests/** \
+                           -Dsonar.python.coverage.reportPaths=coverage.xml
+                     '''
                     }
                  }
               }
