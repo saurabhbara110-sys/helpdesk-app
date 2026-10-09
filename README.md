@@ -22,3 +22,66 @@ A key objective of this project is to enforce a quality-controlled CI/CD process
 * Maintain PostgreSQL as a separate Kubernetes Deployment and Service outside the application Helm release.
 * Manage application configuration and sensitive credentials using environment variables, Jenkins Credentials, and Kubernetes Secrets.
 * Demonstrate an end-to-end CI/CD workflow using practical DevOps tools and infrastructure.
+
+## 2. Technology Stack
+
+The HelpDesk project uses a combination of application development, automated testing, continuous integration and delivery, containerization, code quality analysis, and Kubernetes deployment technologies.
+
+### 2.1 Application Development and Testing
+
+| Technology | Purpose                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Python     | Programming language used to develop the application.                                                     |
+| Flask      | Lightweight web framework used to implement ticket management, authentication, and application endpoints. |
+| PostgreSQL | Relational database used to store application users and support tickets.                                  |
+| pytest     | Automates application tests to verify expected behavior and identify regressions.                         |
+| pytest-cov | Measures and reports code coverage during automated testing.                                              |
+
+### 2.2 Source Control and CI/CD
+
+| Technology                | Purpose                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Git                       | Tracks source code changes and supports version control.                                                                    |
+| GitHub                    | Hosts the application repository and maintains the project history.                                                         |
+| Jenkins                   | Orchestrates the CI/CD pipeline, including testing, quality checks, container image publishing, and application deployment. |
+| SonarQube Community Build | Performs static code analysis and evaluates the project against the configured Quality Gate.                                |
+
+SonarQube runs in a Docker container on the EC2 environment. The Jenkins pipeline connects to the running SonarQube instance to submit analysis results and enforce the Quality Gate before Docker image publishing and deployment.
+
+### 2.3 Containerization and Image Management
+
+| Technology | Purpose                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------- |
+| Docker     | Packages the Flask application and its runtime dependencies into a container image.     |
+| Docker Hub | Stores versioned application images so they can be retrieved for Kubernetes deployment. |
+
+### 2.4 Kubernetes and Application Deployment
+
+| Technology                  | Purpose                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| Kubernetes                  | Orchestrates application containers and manages application workloads.                  |
+| kind (Kubernetes in Docker) | Provides the two-node Kubernetes cluster used for the project.                          |
+| Helm                        | Packages and manages releases of the HelpDesk application and its Kubernetes resources. |
+| NGINX Ingress Controller    | Routes incoming HTTP requests to the HelpDesk Kubernetes Service.                       |
+
+The application is deployed through a Helm chart. PostgreSQL is maintained as a separate Kubernetes Deployment and Service, outside the application's Helm release.
+
+### 2.5 Infrastructure and Configuration Management
+
+| Technology            | Purpose                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| AWS EC2               | Provides the project environment for Jenkins, SonarQube, Docker, and the kind Kubernetes cluster. |
+| Jenkins Credentials   | Securely stores and supplies credentials and sensitive configuration required by pipeline steps.  |
+| Kubernetes Secrets    | Stores sensitive Kubernetes configuration, including the database password.                       |
+| Kubernetes ConfigMaps | Supplies non-sensitive configuration to Kubernetes workloads.                                     |
+
+The project uses a single EC2 instance for the overall environment. The kind cluster runs its control-plane and worker nodes as containers on that environment.
+
+### 2.6 Planned Technologies
+
+The following technologies are potential future improvements and are not presented as implemented components of the current workflow:
+
+* **Argo CD:** GitOps-based Kubernetes deployment and reconciliation.
+* **Prometheus:** Metrics collection and monitoring.
+* **Grafana:** Monitoring dashboards and visualization.
+* **Additional security scanners:** Integration of tools for source code, dependency, container image, and application security testing, as appropriate for the project.
