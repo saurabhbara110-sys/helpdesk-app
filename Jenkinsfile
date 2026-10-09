@@ -76,10 +76,26 @@ pipeline {
               }
          }
 
-
+         stage('Postgres secret from Jenkins'){
+             steps {
+                 withCredentials([ string(
+                       credentialsId: 'k8s_postgres_db_password',
+                       variable: 'POSTGRES_PASSWORD'
+                 )]) {
+                 sh '''
+                       set +x
+                       set -o pipefail
+                       kubectl create secret generic postgres-secret \
+                       -n helpdesk \
+                       --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+                       --dry-run=client -o yaml | kubectl apply -f -
+                    '''
+                }
+             }
+          }
 
          stage('Helm chart deployment'){
-             steps{
+             steps {
                  withCredentials([ string(
                        credentialsId: 'flask_secret_key',
                        variable: 'FLASK_SECRET_KEY'
