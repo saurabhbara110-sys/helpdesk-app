@@ -1,7 +1,9 @@
+import time
 import os
 from werkzeug.security import check_password_hash
 from flask import Flask, request, jsonify, send_from_directory, session, render_template, redirect, make_response
 from db import pool, get_user
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -12,6 +14,54 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 JSON_BODY_REQUIRED = "JSON body is required"
 LOGIN_REQUIRED = "Please login first"
 SUPPORT_ACCESS_REQUIRED = "Support access required"
+
+# 1. Define our custom metric
+http_requests_total = Counter(
+    'helpdesk_http_requests_total',
+    'Total number of HTTP requests received by HelpDesk',
+    ['method', 'endpoint']
+)
+
+http_errors_total = Counter(
+    'helpdesk_http_errors_total',
+    'Total number of HTTP error responses',
+    ['endpoint', 'method', 'status']
+)
+
+http_request_duration = Histogram(
+    'helpdesk_http_request_duration_seconds',
+    'Time taken to process HTTP requests',
+    ['endpoint', 'method'],
+    buckets=[0.1, 0.5, 1, 2.5, 5, 10]
+)
+
+# 2. Increment the counter before every request
+@app.before_request
+def track_requests():
+    http_requests_total.labels(
+    method=request.method,
+    endpoint=request.endpoint or "unknown"
+    ).inc()
+
+    request.start_time = time.perf_counter()
+
+@app.after_request
+def track_errors(response):
+    if response.status_code >= 400:
+        http_errors_total.labels(
+            endpoint=request.endpoint or 'unknown',
+            method=request.method,
+            status=str(response.status_code)
+        ).inc()
+
+    elapsed_time = time.perf_counter() - request.start_time
+    http_request_duration.labels(
+            endpoint=request.endpoint or 'unknown',
+            method=request.method
+    ).observe(elapsed_time)
+
+    return response
+
 
 @app.route("/", methods=["GET"])
 def home():
@@ -42,6 +92,12 @@ def health():
 @app.route("/info")
 def info():
     return "HelpDesk App v1.0"
+
+@app.route("/metrics")
+def metrics():
+    return generate_latest(), 200, {
+        "Content-Type": CONTENT_TYPE_LATEST
+    }
 
 @app.route("/login", methods=["POST"])
 def login():

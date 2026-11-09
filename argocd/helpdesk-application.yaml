@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: helpdesk
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/saurabhbara110-sys/helpdesk-app.git
+    targetRevision: main
+    path: helm/helpdesk
+    helm:
+      releaseName: helpdesk
+      values: |
+        createFlaskSecret: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: helpdesk

@@ -162,3 +162,5 @@ tolerations: []
 affinity: {}
 
 flaskSecretKey: ""
+# doing this so that argocd will not render flask-secret-yaml and let jenkins handle it.
+createFlaskSecret: true
