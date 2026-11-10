@@ -4,7 +4,6 @@ metadata:
   name: prometheus
   namespace: monitoring
 spec:
-  automountServiceAccountToken: false
   replicas: 1
   selector:
     matchLabels:
@@ -15,6 +14,7 @@ spec:
         app: prometheus
 
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: prometheus
           image: prom/prometheus:v3.16.0
