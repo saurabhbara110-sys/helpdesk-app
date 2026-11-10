@@ -1,4 +1,4 @@
-from app import app
+from app import app, main
 from datetime import datetime
 
 def test_home_page():
@@ -1325,15 +1325,13 @@ def test_resolve_ticket_requires_support_role():
 def test_main_starts_flask_app(monkeypatch):
     called = {}
 
-    def fake_run(self, host, port):
+    def fake_run(host, port):
         called["host"] = host
         called["port"] = port
 
-    from flask import Flask
-    monkeypatch.setattr(Flask, "run", fake_run)
+    monkeypatch.setattr(app, "run", fake_run)
 
-    import runpy
-    runpy.run_module("app", run_name="__main__")
+    main()
 
     assert called["host"] == "0.0.0.0"
     assert called["port"] == 5000
