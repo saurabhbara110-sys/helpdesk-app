@@ -93,7 +93,7 @@ def health():
 def info():
     return "HelpDesk App v1.0"
 
-@app.route("/metrics")
+@app.route("/metrics", methods=["GET"])
 def metrics():
     return generate_latest(), 200, {
         "Content-Type": CONTENT_TYPE_LATEST
